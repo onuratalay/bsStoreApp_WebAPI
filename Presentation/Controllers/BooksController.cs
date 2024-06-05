@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Entities.Exceptions;
 using Entities.Models;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -24,113 +25,62 @@ namespace Presentation.Controllers
         [HttpGet]
         public IActionResult GetAllBooks()
         {
-            try
-            {
-                var books = _serviceManager.BookService.GetAllBooks(false);
-                return Ok(books);
-            }
-            catch (Exception e)
-            {
-                throw new Exception(e.Message);
-            }
-
+            var books = _serviceManager.BookService.GetAllBooks(false);
+            return Ok(books);
         }
 
         [HttpGet("{id:int}")]
         public IActionResult GetOneBook(int id)
         {
-            try
-            {
-                var book = _serviceManager
-                    .BookService
-                    .GetOneBookById(id, false);
+            var book = _serviceManager
+                .BookService
+                .GetOneBookById(id, false);
 
-                if (book is null)
-                    return NotFound();
-
-                return Ok(book);
-            }
-            catch (Exception e)
-            {
-                throw new Exception(e.Message);
-            }
-
+            return Ok(book);
         }
 
         [HttpPost]
         public IActionResult CreateOneBook([FromBody] Book book)
         {
-            try
-            {
-                if (book is null)
-                    return BadRequest();
+            if (book is null)
+                return BadRequest();
 
-                _serviceManager.BookService.CreateOneBook(book);
+            _serviceManager.BookService.CreateOneBook(book);
 
-                return StatusCode(201, book);
-
-            }
-            catch (Exception e)
-            {
-                return BadRequest(e.Message);
-            }
+            return StatusCode(201, book);
         }
 
         [HttpPut("{id:int}")]
         public IActionResult UpdateOneBook([FromRoute(Name = "id")] int id,
             [FromBody] Book book)
         {
-            try
-            {
-                if (book is null)
-                    return BadRequest(); // 400
+            if (book is null)
+                return BadRequest(); // 400
 
-                _serviceManager.BookService.UpdateOneBook(id, book, true);
-                return NoContent(); // 204
-            }
-            catch (Exception e)
-            {
-                throw new Exception(e.Message);
-            }
+            _serviceManager.BookService.UpdateOneBook(id, book, true);
+            return NoContent(); // 204
         }
 
         [HttpDelete("{id:int}")]
         public IActionResult DeleteOneBook([FromRoute(Name = "id")] int id)
         {
-            try
-            {
-                _serviceManager.BookService.DeleteOneBook(id, false);
-                return NoContent();
-            }
-            catch (Exception e)
-            {
-                throw new Exception(e.Message);
-            }
+            _serviceManager.BookService.DeleteOneBook(id, false);
+            return NoContent();
         }
 
         [HttpPatch("{id:int}")]
         public IActionResult PartiallyUpdateOneBook([FromRoute(Name = "id")] int id,
             [FromBody] JsonPatchDocument<Book> bookPatch)
         {
-            try
-            {
-                // check entity
-                var entity = _serviceManager
-                    .BookService
-                    .GetOneBookById(id, true);
+            // check entity
+            var entity = _serviceManager
+                .BookService
+                .GetOneBookById(id, true);
 
-                if (entity is null)
-                    return NotFound(); // 404
+            bookPatch.ApplyTo(entity);
+            _serviceManager.BookService.UpdateOneBook(id, entity, true);
 
-                bookPatch.ApplyTo(entity);
-                _serviceManager.BookService.UpdateOneBook(id, entity, true);
-
-                return NoContent(); // 204
-            }
-            catch (Exception e)
-            {
-                throw new Exception(e.Message);
-            }
+            return NoContent(); // 204
         }
     }
 

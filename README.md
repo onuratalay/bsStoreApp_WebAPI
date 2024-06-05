@@ -11,6 +11,8 @@ Bu proje, ASP.NET Core 6 kullanılarak geliştirilmiş bir Kitapçı Web API'sid
 
 **ORM:** EF Core
 
+**Logger:** NLog
+
 *<---------------Güncellenmeye devam edecek---------------->*
 
   
