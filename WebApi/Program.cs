@@ -13,12 +13,23 @@ namespace WebApi
             var builder = WebApplication.CreateBuilder(args);
 
             LogManager.Setup().LoadConfigurationFromFile(string.Concat(Directory.GetCurrentDirectory(), "/nlog.config"));
-            // Add services to the container.
 
-            builder.Services.AddControllers()
+            builder.Services.AddControllers(config =>
+                {
+                    config.RespectBrowserAcceptHeader = true;
+                    // Content Negotiation default olarak false gelir. (Accept : */*)
+                    // true yaparak API projemizi içerik pazarlýðýna açýk hale getiriyoruz.
+
+                    config.ReturnHttpNotAcceptable = true;
+                    // Kabul etmediðimiz formatlarýn hata kodunu dönebilmesi için true olarak deðiþtiriyoruz.
+                })
+
+                .AddCustomCsvFormatter()
+                .AddXmlDataContractSerializerFormatters()
+                // XML formatýnda content verebimesini saðlar.
                 .AddApplicationPart(typeof(Presentation.AssemblyReference).Assembly)
                 .AddNewtonsoftJson();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
