@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NLog;
 using Repositories.EFCore;
@@ -26,9 +27,20 @@ namespace WebApi
 
                 .AddCustomCsvFormatter()
                 .AddXmlDataContractSerializerFormatters()
-                // XML formatýnda content verebimesini saðlar.
+                // XML formatýnda content verebilmesini saðlar.
                 .AddApplicationPart(typeof(Presentation.AssemblyReference).Assembly)
                 .AddNewtonsoftJson();
+
+
+            builder.Services.Configure<ApiBehaviorOptions>(options =>
+            {
+                options.SuppressModelStateInvalidFilter = true;
+                // [ApiController] anonasyonu eklendiði zaman, Controller bazý default özellikler (BehaviorOptions) kazanýr. Bununla gelen özelliklerden birisi de ModelStateInvalidFilter. Bu yapý geçersiz bir model state i ile karþýlaþýrsa 400 kodunu otomatik olarak üretiyor.
+
+                // DataAnnotation ile validasyon yaptýðýmýzda,
+                // invalid bir veri girilirse otomatik oluþan
+                // 400 bad requesti suppressler (bastýrýr).
+            });
 
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();

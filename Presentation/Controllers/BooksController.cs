@@ -41,14 +41,20 @@ namespace Presentation.Controllers
         }
 
         [HttpPost]
-        public IActionResult CreateOneBook([FromBody] Book book)
+        public IActionResult CreateOneBook([FromBody] BookDtoForInsert bookDto)
         {
-            if (book is null)
+            if (bookDto is null)
                 return BadRequest();
 
-            _serviceManager.BookService.CreateOneBook(book);
+            if (!ModelState.IsValid)
+                return UnprocessableEntity(ModelState);
+
+            var book = _serviceManager.BookService.CreateOneBook(bookDto);
 
             return StatusCode(201, book);
+            // StatusCode201 yerine CreatedAtRoute() kullanırsak
+            // responseun headerına lokasyon bilgisi koyabiliyoruz.
+            // Oluşan yeni kaynağın lokasyonunu yani URI'ını elde edebiliyoruz.
         }
 
         [HttpPut("{id:int}")]
@@ -58,7 +64,10 @@ namespace Presentation.Controllers
             if (bookDto is null)
                 return BadRequest(); // 400
 
-            _serviceManager.BookService.UpdateOneBook(id, bookDto, true);
+            if (!ModelState.IsValid)
+                return UnprocessableEntity(ModelState);
+
+            _serviceManager.BookService.UpdateOneBook(id, bookDto, false);
             return NoContent(); // 204
         }
 
@@ -71,20 +80,23 @@ namespace Presentation.Controllers
 
         [HttpPatch("{id:int}")]
         public IActionResult PartiallyUpdateOneBook([FromRoute(Name = "id")] int id,
-            [FromBody] JsonPatchDocument<Book> bookPatch)
+            [FromBody] JsonPatchDocument<BookDtoForUpdate> bookPatch)
         {
-            // check entity
-            var entity = _serviceManager
-                .BookService
-                .GetOneBookById(id, true);
+            if (bookPatch is null)
+                return BadRequest();
 
-            bookPatch.ApplyTo(entity);
-            _serviceManager.BookService.UpdateOneBook(id,
-                new BookDtoForUpdate(entity.Id, entity.Title, entity.Price),
-                true);
+            var result = _serviceManager.BookService.GetOneBookForPatch(id, false);
+
+            bookPatch.ApplyTo(result.bookDtoForUpdate, ModelState);
+
+            TryValidateModel(result.bookDtoForUpdate);
+
+            if (!ModelState.IsValid)
+                return UnprocessableEntity(ModelState);
+
+            _serviceManager.BookService.SaveChangesForPatch(result.bookDtoForUpdate, result.book);
 
             return NoContent(); // 204
         }
     }
-
 }
